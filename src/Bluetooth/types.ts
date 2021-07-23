@@ -5,6 +5,7 @@ import {
   BleError,
   Device,
   ScanOptions,
+  LogLevel,
 } from 'react-native-ble-plx';
 
 export interface BluetoothDevice {
@@ -44,4 +45,4 @@ export interface MonitorCharacteristicParser<ParserInput, ParserResult> {
   (result: ParserInput): ParserResult;
 }
 
-export { ScanMode, Subscription, Characteristic, BleError, Device, ScanOptions };
+export { ScanMode, Subscription, Characteristic, BleError, Device, ScanOptions, LogLevel };

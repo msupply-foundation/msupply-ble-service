@@ -13,6 +13,7 @@ import {
   MonitorCharacteristicParser,
   ScanCallback,
   SensorLog,
+  LogLevel,
 } from './types';
 import { BluetoothManager } from './BleManager';
 
@@ -22,6 +23,7 @@ export class BleService {
 
   constructor(manager: BluetoothManager, utils: UtilService) {
     this.manager = manager;
+    manager.setLogLevel(LogLevel.Verbose);
     this.utils = utils;
   }
 
@@ -47,6 +49,8 @@ export class BleService {
   scanForSensors = (callback: ScanCallback): void => {
     const scanOptions: ScanOptions = { scanMode: ScanMode.LowLatency };
     this.manager.startDeviceScan(null, scanOptions, callback);
+    console.log('Started scan');
+    this.manager.logLevel().then(value => console.log(`Log Level ${value}`));
   };
 
   writeCharacteristic = async (

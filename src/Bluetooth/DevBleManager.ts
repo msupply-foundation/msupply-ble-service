@@ -1,6 +1,13 @@
 import { BluetoothDevice } from './types';
 import { BluetoothManager } from './BleManager';
-import { Device, BleError, ScanOptions, Characteristic, Subscription } from 'react-native-ble-plx';
+import {
+  Device,
+  BleError,
+  ScanOptions,
+  Characteristic,
+  Subscription,
+  LogLevel,
+} from 'react-native-ble-plx';
 
 interface MonitorCallback {
   (error: BleError | null, characteristic: Characteristic | null): void;
@@ -63,6 +70,8 @@ export class DevBleManager implements BluetoothManager {
 
   isScanning: boolean;
 
+  level: LogLevel = LogLevel.None;
+
   scannerInterval: number | null;
 
   constructor() {
@@ -71,9 +80,19 @@ export class DevBleManager implements BluetoothManager {
     this.isScanning = false;
     this.scannerInterval = null;
   }
+  async logLevel(): Promise<LogLevel> {
+    return this.level;
+  }
+
+  setLogLevel(logLevel: LogLevel): void {
+    this.level = logLevel;
+  }
 
   async connectToDevice(macAddress: string): Promise<BluetoothDevice> {
     this.connectedDevices[macAddress] = { id: macAddress };
+    if (this.level !== LogLevel.None) {
+      console.log('connect to Device in DEVBlemanager');
+    }
     return { id: macAddress };
   }
 
@@ -97,6 +116,9 @@ export class DevBleManager implements BluetoothManager {
     macAddress: string
   ): Promise<BluetoothDevice> {
     const connectedDevice = this.connectedDevices[macAddress];
+    if (this.level !== LogLevel.None) {
+      console.log('connect to Device in DEVBlemanager');
+    }
     if (!connectedDevice) {
       throw new Error("Trying to discover services of a device which isn't connected");
     }
@@ -116,6 +138,9 @@ export class DevBleManager implements BluetoothManager {
     callback: (error: BleError | null, scannedDevice: Device | null) => void
   ): void {
     this.isScanning = true;
+    if (this.level !== LogLevel.None) {
+      console.log('Scanning in DEVBlemanager');
+    }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore - TSC sometimes thinks it's getting setInterval from node, not react-native
     this.scannerInterval = setInterval(

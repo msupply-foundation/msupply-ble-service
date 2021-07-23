@@ -6,10 +6,13 @@ import {
   BleError,
   Device,
   ScanOptions,
+  LogLevel,
 } from 'react-native-ble-plx';
 import { BluetoothDevice } from './types';
 
 export declare class BluetoothManager {
+  setLogLevel(logLevel: LogLevel): void;
+  logLevel(): Promise<LogLevel>;
   connectToDevice(macAddress: MacAddress): Promise<BluetoothDevice>;
   isDeviceConnected(macAddress: MacAddress): Promise<boolean>;
   cancelDeviceConnection(macAddress: MacAddress): Promise<BluetoothDevice>;
