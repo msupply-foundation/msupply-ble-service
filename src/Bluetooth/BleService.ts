@@ -1,7 +1,7 @@
-import { UtilService } from '../UtilService';
+import { BTUtilService } from '../BTUtilService';
 
 import { Buffer } from 'buffer';
-import { BLUE_MAESTRO, BLUETOOTH } from '../constants';
+import { BLUE_MAESTRO, BLUETOOTH } from '../index';
 import { MacAddress } from '../types/common';
 import {
   Characteristic,
@@ -19,11 +19,14 @@ import { BluetoothManager } from './BleManager';
 
 export class BleService {
   manager: BluetoothManager;
-  utils: UtilService;
+  utils: BTUtilService;
 
-  constructor(manager: BluetoothManager, utils: UtilService) {
+  constructor(manager: BluetoothManager, utils: BTUtilService) {
     this.manager = manager;
     manager.setLogLevel(LogLevel.Verbose);
+    // In the future we may want to use our own utils,
+    //  not the ones passed in from the app.
+    //this.utils = new BTUtilService();
     this.utils = utils;
   }
 
@@ -153,8 +156,7 @@ export class BleService {
         return [
           ...acc,
           {
-            temperature:
-              this.utils.toFahrenheit(buffer.readInt16BE(index)) / BLUE_MAESTRO.TEMPERATURE_DIVISOR,
+            temperature: buffer.readInt16BE(index) / BLUE_MAESTRO.TEMPERATURE_DIVISOR,
           },
         ];
       }, []);
