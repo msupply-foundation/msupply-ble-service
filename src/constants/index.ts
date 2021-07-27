@@ -2,13 +2,13 @@
 export { MILLISECONDS } from './Milliseconds';
 //export { DEPENDENCY, BLUETOOTH_SERVICE } from './Dependency';
 // export { ENTITIES } from './Entities';
-export {
-  BLUETOOTH_STATE,
-  DANGEROUS_BATTERY_LEVEL,
-  PERMISSION,
-  PERMISSION_STATE,
-} from './NativeDevice';
-
+// export {
+//   BLUETOOTH_STATE,
+//   DANGEROUS_BATTERY_LEVEL,
+//   PERMISSION,
+//   PERMISSION_STATE,
+// } from './NativeDevice';
+//
 // export { COLOUR } from './Colour';
 // export { FONT } from './Font';
 // export { STYLE } from './Style';

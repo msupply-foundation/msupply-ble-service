@@ -1,7 +1,7 @@
 import { MILLISECONDS } from '../constants';
 import moment from 'moment';
 import generateUUID from 'react-native-uuid';
-import packageJson from '../../package.json';
+//import packageJson from '../../package.json';
 import { UnixTimestamp } from '../types/common';
 import { Seconds } from '../constants/Milliseconds';
 
@@ -29,7 +29,7 @@ export class UtilService {
     return someDate + secondsToAdd;
   };
 
-  appVersion = (): string => packageJson.version;
+  appVersion = (): string => '0.0.0';
 
   // Transforms a version string in the same format we use in package.json - 0.0.3, 0.0.3-rc1 etc
   // into an integer code which can more easily be used to do range comparisons.
