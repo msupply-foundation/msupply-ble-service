@@ -12,31 +12,37 @@ yarn
 
 > While it's possible to use [`npm`](https://github.com/npm/cli), the tooling is built around [`yarn`](https://classic.yarnpkg.com/), so you'll have an easier time if you use `yarn` for development.
 
-While developing, you can run the [example app](/example/) to test your changes. Any changes you make in your library's JavaScript code will be reflected in the example app without a rebuild. If you change any native code, then you'll need to rebuild the example app.
-
-To start the packager:
+We do not have an example app yet. For development, link this library into `msupply-cold-chain` using the following procedure:
 
 ```sh
-yarn example start
+# In your msupply-cold-chain directory:
+yarn remove msupply-ble-service
+react-native-clean-project
+# or rm -fr node_modules ; watchman watch-del-all; rm -rf $TMPDIR/react-*; rm -rf $TMPDIR/metro-* ; rm -rf android/build
+yarn add link:../msupply-ble-service # or wherever this module is
+npx react-native start --config metro.devconfig.js
+npx react-native run-android
 ```
+This provides a pretty good developer experience.
+When you make a change in this module, you can just hit 'r' in the terminal to reload js and push the change to the device.
 
-To run the example app on Android:
+### Publishing internally
+
+Until such time as we publish this module to npm, we use
+[yalc](https://github.com/wclr/yalc#keep-it-in-git) to embed a snapshot of the
+currently working code in `msupply-cold-chain`. This allows devs to
+work on the rest of `msupply-cold-chain` without having to set up the development
+environment for this module. The procedure for this informal publish is:
 
 ```sh
-yarn example android
+# In msupply-ble-service
+npx yalc publish
+# In msupply-cold-chain
+yarn remove msupply-ble-service
+npx yalc add msupply-ble-service
+# git commit and push to github
 ```
 
-To run the example app on iOS:
-
-```sh
-yarn example ios
-```
-
-To run the example app on Web:
-
-```sh
-yarn example web
-```
 
 Make sure your code passes TypeScript and ESLint. Run the following to verify:
 
@@ -57,18 +63,6 @@ Remember to add tests for your change if possible. Run the unit tests by:
 yarn test
 ```
 
-### Commit message convention
-
-We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
-
-- `fix`: bug fixes, e.g. fix crash due to deprecated method.
-- `feat`: new features, e.g. add new method to the module.
-- `refactor`: code refactor, e.g. migrate from class components to hooks.
-- `docs`: changes into documentation, e.g. add usage example for the module..
-- `test`: adding or updating tests, e.g. add integration tests using detox.
-- `chore`: tooling changes, e.g. change CI config.
-
-Our pre-commit hooks verify that your commit message matches this format when committing.
 
 ### Linting and tests
 
@@ -78,15 +72,6 @@ We use [TypeScript](https://www.typescriptlang.org/) for type checking, [ESLint]
 
 Our pre-commit hooks verify that the linter and tests pass when committing.
 
-### Publishing to npm
-
-We use [release-it](https://github.com/release-it/release-it) to make it easier to publish new versions. It handles common tasks like bumping version based on semver, creating tags and releases etc.
-
-To publish new versions, run the following:
-
-```sh
-yarn release
-```
 
 ### Scripts
 
