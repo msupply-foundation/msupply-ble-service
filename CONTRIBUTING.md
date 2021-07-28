@@ -12,13 +12,12 @@ yarn
 
 > While it's possible to use [`npm`](https://github.com/npm/cli), the tooling is built around [`yarn`](https://classic.yarnpkg.com/), so you'll have an easier time if you use `yarn` for development.
 
-We do not have an example app yet. For development, link this library into `msupply-cold-chain` using the following procedure:
+As we do not have an example app yet, for development, link this library into `msupply-cold-chain` using the following procedure:
 
 ```sh
 # In your msupply-cold-chain directory:
-yarn remove msupply-ble-service
-react-native-clean-project
-# or rm -fr node_modules ; watchman watch-del-all; rm -rf $TMPDIR/react-*; rm -rf $TMPDIR/metro-* ; rm -rf android/build
+npx yalc remove msupply-ble-service
+npx react-native-clean-project
 yarn add link:../msupply-ble-service # or wherever this module is
 npx react-native start --config metro.devconfig.js
 npx react-native run-android
@@ -36,10 +35,11 @@ environment for this module. The procedure for this informal publish is:
 
 ```sh
 # In msupply-ble-service
-npx yalc publish
+npx yalc publish --private --scripts
 # In msupply-cold-chain
 yarn remove msupply-ble-service
 npx yalc add msupply-ble-service
+yarn
 # git commit and push to github
 ```
 
