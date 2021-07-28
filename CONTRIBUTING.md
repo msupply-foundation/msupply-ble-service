@@ -16,13 +16,13 @@ As we do not have an example app yet, for development, link this library into `m
 
 ```sh
 # In your msupply-cold-chain directory:
-npx yalc remove msupply-ble-service
+yarn remove msupply-ble-service
 npx react-native-clean-project
 yarn add link:../msupply-ble-service # or wherever this module is
 npx react-native start --config metro.devconfig.js
 npx react-native run-android
 ```
-This provides a pretty good developer experience.
+This provides a pretty good DX:
 When you make a change in this module, you can just hit 'r' in the terminal to reload js and push the change to the device.
 
 ### Publishing internally
