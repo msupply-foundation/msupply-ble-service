@@ -1,5 +1,5 @@
 import { MacAddress } from '../types/common';
-import { BluetoothManager, BleDevice } from './BleManager';
+import { BluetoothManager, MockOrRealDevice } from './BleManager';
 import {
   Device,
   BleError,
@@ -62,7 +62,7 @@ const COMMAND_TO_RESULT_LOOKUP = {
 };
 
 export class DevBleManager implements BluetoothManager {
-  connectedDevices: { [key: string]: BleDevice | null };
+  connectedDevices: { [key: string]: MockOrRealDevice | null };
 
   registeredCallbacks: {
     [key: string]: MonitorCallback;
@@ -88,19 +88,19 @@ export class DevBleManager implements BluetoothManager {
     this.level = logLevel;
   }
 
-  async connectToDevice(macAddress: MacAddress): Promise<BleDevice> {
-    this.connectedDevices[macAddress] = { id: macAddress, name: 'joeblow' };
+  async connectToDevice(macAddress: MacAddress): Promise<MockOrRealDevice> {
+    this.connectedDevices[macAddress] = { id: macAddress, name: 'bluemaestro' };
     if (this.level !== LogLevel.None) {
       console.log('connect to Device in DEVBlemanager');
     }
-    return { id: macAddress, name: 'joeblow' };
+    return { id: macAddress, name: 'bluemaestro' };
   }
 
   async isDeviceConnected(macAddress: string): Promise<boolean> {
     return !!this.connectedDevices[macAddress];
   }
 
-  async cancelDeviceConnection(macAddress: string): Promise<BleDevice> {
+  async cancelDeviceConnection(macAddress: string): Promise<MockOrRealDevice> {
     const device = this.connectedDevices[macAddress];
 
     if (!device) {
@@ -112,7 +112,9 @@ export class DevBleManager implements BluetoothManager {
     return device;
   }
 
-  async discoverAllServicesAndCharacteristicsForDevice(macAddress: MacAddress): Promise<BleDevice> {
+  async discoverAllServicesAndCharacteristicsForDevice(
+    macAddress: MacAddress
+  ): Promise<MockOrRealDevice> {
     const connectedDevice = this.connectedDevices[macAddress];
     if (this.level !== LogLevel.None) {
       console.log('connect to Device in DEVBlemanager');

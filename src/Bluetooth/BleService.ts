@@ -7,7 +7,7 @@ import {
   Characteristic,
   ScanOptions,
   ScanMode,
-  BluetoothDevice,
+  TypedDevice,
   InfoLog,
   MonitorCharacteristicCallback,
   MonitorCharacteristicParser,
@@ -47,13 +47,13 @@ export class BleService {
     throw new Error('device or name is null');
   };
 
-  connectToDevice = async (macAddress: MacAddress): Promise<BluetoothDevice> => {
+  connectToDevice = async (macAddress: MacAddress): Promise<TypedDevice> => {
     const device = await this.manager.connectToDevice(macAddress);
     console.log(`BleService connectToDevice, device, id ${device?.id}, name ${device?.name}`);
     return { id: device.id, deviceType: this.deviceConstants(device) };
   };
 
-  connectAndDiscoverServices = async (macAddress: MacAddress): Promise<BluetoothDevice> => {
+  connectAndDiscoverServices = async (macAddress: MacAddress): Promise<TypedDevice> => {
     if (await this.manager.isDeviceConnected(macAddress)) {
       await this.manager.cancelDeviceConnection(macAddress);
     }
@@ -89,10 +89,7 @@ export class BleService {
     this.manager.logLevel().then(value => console.log(`Log Level ${value}`));
   };
 
-  writeCharacteristic = async (
-    device: BluetoothDevice,
-    command: string
-  ): Promise<Characteristic> => {
+  writeCharacteristic = async (device: TypedDevice, command: string): Promise<Characteristic> => {
     console.log(`BleService Writing to ${device.deviceType.BLUETOOTH_UART_SERVICE_UUID}`);
     return this.manager.writeCharacteristicWithoutResponseForDevice(
       device.id,
@@ -103,7 +100,7 @@ export class BleService {
   };
 
   monitorCharacteristic = (
-    device: BluetoothDevice,
+    device: TypedDevice,
     callback: MonitorCharacteristicCallback<boolean | SensorLog[] | InfoLog>
   ): Promise<boolean | SensorLog[] | InfoLog> => {
     console.log(
@@ -122,7 +119,7 @@ export class BleService {
   };
 
   writeAndMonitor = async (
-    device: BluetoothDevice,
+    device: TypedDevice,
     command: string,
     parser: MonitorCharacteristicParser<string[], SensorLog[] | InfoLog>
   ): Promise<boolean | InfoLog | SensorLog[]> => {
@@ -150,7 +147,7 @@ export class BleService {
   };
 
   writeWithSingleResponse = async (
-    device: BluetoothDevice,
+    device: TypedDevice,
     command: string,
     parser: MonitorCharacteristicParser<string, boolean>
   ): Promise<boolean | InfoLog | SensorLog[]> => {
@@ -201,7 +198,7 @@ export class BleService {
 
     const result = (await this.writeAndMonitor(
       device,
-      device.deviceType.COMMANDS_DOWNLOAD,
+      device.deviceType.COMMAND_DOWNLOAD,
       monitorCallback
     )) as SensorLog[];
 
@@ -212,7 +209,7 @@ export class BleService {
     const device = await this.connectAndDiscoverServices(macAddress);
     const result = await this.writeWithSingleResponse(
       device,
-      `${device.deviceType.COMMANDS_UPDATE_LOG_INTERVAL}${logInterval}`,
+      `${device.deviceType.COMMAND_UPDATE_LOG_INTERVAL}${logInterval}`,
       data => !!this.utils.stringFromBase64(data).match(/interval/i)
     );
     return !!result;
@@ -220,10 +217,10 @@ export class BleService {
 
   blink = async (macAddress: MacAddress): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
-    console.log(`BleService Blinking ${device.deviceType.COMMANDS_BLINK}`);
+    console.log(`BleService Blinking ${device.deviceType.COMMAND_BLINK}`);
     const result = (await this.writeWithSingleResponse(
       device,
-      device.deviceType.COMMANDS_BLINK,
+      device.deviceType.COMMAND_BLINK,
       data => {
         const answer = this.utils.stringFromBase64(data);
         console.log(`BleService data returned from blink write: ${result}`);
@@ -268,7 +265,7 @@ export class BleService {
 
     const result: InfoLog = (await this.writeAndMonitor(
       device,
-      device.deviceType.COMMANDS_INFO,
+      device.deviceType.COMMAND_INFO,
       monitorResultCallback
     )) as InfoLog;
 
@@ -279,7 +276,7 @@ export class BleService {
     const device = await this.connectAndDiscoverServices(macAddress);
     const result = (await this.writeWithSingleResponse(
       device,
-      device.deviceType.COMMANDS_DISABLE_BUTTON,
+      device.deviceType.COMMAND_DISABLE_BUTTON,
       data => {
         return !!this.utils.stringFromBase64(data).match(/ok/i);
       }
