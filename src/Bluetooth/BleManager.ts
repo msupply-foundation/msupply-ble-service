@@ -16,7 +16,7 @@ export declare class BluetoothManager {
   connectToDevice(macAddress: MacAddress): Promise<BluetoothDevice>;
   isDeviceConnected(macAddress: MacAddress): Promise<boolean>;
   cancelDeviceConnection(macAddress: MacAddress): Promise<BluetoothDevice>;
-  discoverAllServicesAndCharacteristicsForDevice(macAddress: MacAddress): Promise<BluetoothDevice>;
+  discoverAllServicesAndCharacteristicsForDevice(macAddress: MacAddress): Promise<Device>;
   stopDeviceScan(): void;
   startDeviceScan(
     UUIDs: string[] | null,
@@ -39,4 +39,4 @@ export declare class BluetoothManager {
   ): Subscription;
 }
 
-export const BleManager = BlePlxManager as unknown as typeof BluetoothManager;
+export const BleManager = (BlePlxManager as unknown) as typeof BluetoothManager;
