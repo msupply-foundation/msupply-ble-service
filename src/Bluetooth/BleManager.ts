@@ -8,15 +8,16 @@ import {
   ScanOptions,
   LogLevel,
 } from 'react-native-ble-plx';
-import { BluetoothDevice } from './types';
+
+export type BleDevice = Pick<Device, 'id' | 'name'>;
 
 export declare class BluetoothManager {
   setLogLevel(logLevel: LogLevel): void;
   logLevel(): Promise<LogLevel>;
-  connectToDevice(macAddress: MacAddress): Promise<BluetoothDevice>;
+  connectToDevice(macAddress: MacAddress): Promise<BleDevice>;
   isDeviceConnected(macAddress: MacAddress): Promise<boolean>;
-  cancelDeviceConnection(macAddress: MacAddress): Promise<BluetoothDevice>;
-  discoverAllServicesAndCharacteristicsForDevice(macAddress: MacAddress): Promise<Device>;
+  cancelDeviceConnection(macAddress: MacAddress): Promise<BleDevice>;
+  discoverAllServicesAndCharacteristicsForDevice(macAddress: MacAddress): Promise<BleDevice>;
   stopDeviceScan(): void;
   startDeviceScan(
     UUIDs: string[] | null,
@@ -39,4 +40,4 @@ export declare class BluetoothManager {
   ): Subscription;
 }
 
-export const BleManager = (BlePlxManager as unknown) as typeof BluetoothManager;
+export const BleManager = BlePlxManager as unknown as typeof BluetoothManager;

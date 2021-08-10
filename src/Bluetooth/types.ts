@@ -8,8 +8,13 @@ import {
   LogLevel,
 } from 'react-native-ble-plx';
 
+import { BT510, BLUE_MAESTRO } from '../constants';
+
+export type DeviceType = typeof BT510 | typeof BLUE_MAESTRO; // BT510 | BLUE_MAESTRO
+
 export interface BluetoothDevice {
   id: string;
+  deviceType: DeviceType; // BT510 | BLUE_MAESTRO
 }
 
 export interface InfoLog {

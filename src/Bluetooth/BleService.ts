@@ -16,6 +16,7 @@ import {
   LogLevel,
   Device,
   BleError,
+  DeviceType,
 } from './types';
 import { BluetoothManager } from './BleManager';
 
@@ -32,35 +33,38 @@ export class BleService {
     this.utils = utils;
   }
 
-  connectToDevice = async (macAddress: MacAddress): Promise<BluetoothDevice> => {
-    return this.manager.connectToDevice(macAddress);
+  deviceConstants = (device: Pick<Device, 'id' | 'name'> | null): DeviceType => {
+    if (device?.name) {
+      if (device.name === 'BT510') {
+        // Laird doesn't include Manufacurer Data in connect response.
+        return BT510;
+      } else {
+        // Blue Maestro has part of the mac address as its name.
+        // We could check this but...
+        return BLUE_MAESTRO;
+      }
+    }
+    throw new Error('device or name is null');
   };
 
-  connectAndDiscoverServices = async (macAddress: MacAddress): Promise<Device | null> => {
+  connectToDevice = async (macAddress: MacAddress): Promise<BluetoothDevice> => {
+    const device = await this.manager.connectToDevice(macAddress);
+    console.log(`BleService connectToDevice, device, id ${device?.id}, name ${device?.name}`);
+    return { id: device.id, deviceType: this.deviceConstants(device) };
+  };
+
+  connectAndDiscoverServices = async (macAddress: MacAddress): Promise<BluetoothDevice> => {
     if (await this.manager.isDeviceConnected(macAddress)) {
       await this.manager.cancelDeviceConnection(macAddress);
     }
-    await this.connectToDevice(macAddress);
+    const device = await this.connectToDevice(macAddress);
 
-    const device = await this.manager.discoverAllServicesAndCharacteristicsForDevice(macAddress);
-    console.log(
-      `BleService connectAndDiscoverServices, device2, id ${device?.id}, name ${device?.name}, mfgData ${device?.manufacturerData}`
-    );
+    await this.manager.discoverAllServicesAndCharacteristicsForDevice(macAddress);
     return device;
   };
 
   stopScan = (): void => {
     this.manager.stopDeviceScan();
-  };
-
-  deviceConstants = (device: Device | null): any => {
-    if (device?.name === 'BT510') {
-      // Laird doesn't include Manufacurer Data in connect response.
-      return BT510;
-    } else {
-      return BLUE_MAESTRO;
-    }
-    //    return null;
   };
 
   scanForSensors = (callback: ScanCallback): void => {
@@ -86,41 +90,30 @@ export class BleService {
   };
 
   writeCharacteristic = async (
-    macAddress: MacAddress,
-    device: Device | null,
+    device: BluetoothDevice,
     command: string
   ): Promise<Characteristic> => {
-    const btConsts = this.deviceConstants(device);
-    if (!btConsts) {
-      throw new Error(`BleService Can't write to unknown device`);
-    }
-
-    command = this.utils.base64FromString(command);
-
-    console.log(`BleService Writing to ${btConsts?.BLUETOOTH.UART_SERVICE_UUID}`);
+    console.log(`BleService Writing to ${device.deviceType.BLUETOOTH_UART_SERVICE_UUID}`);
     return this.manager.writeCharacteristicWithoutResponseForDevice(
-      macAddress,
-      btConsts.BLUETOOTH.UART_SERVICE_UUID,
-      btConsts.BLUETOOTH.READ_CHARACTERISTIC_UUID,
-      command
+      device.id,
+      device.deviceType.BLUETOOTH_UART_SERVICE_UUID,
+      device.deviceType.BLUETOOTH_READ_CHARACTERISTIC_UUID,
+      this.utils.base64FromString(command)
     );
   };
 
   monitorCharacteristic = (
-    macAddress: MacAddress,
-    device: Device | null,
+    device: BluetoothDevice,
     callback: MonitorCharacteristicCallback<boolean | SensorLog[] | InfoLog>
   ): Promise<boolean | SensorLog[] | InfoLog> => {
-    const btConsts = this.deviceConstants(device);
-    if (!btConsts) {
-      throw new Error(`BleService Can't monitor from unknown device`);
-    }
-    console.log(`BleService Monitoring from ${btConsts.BLUETOOTH.WRITE_CHARACTERISTIC_UUID}`);
+    console.log(
+      `BleService Monitoring from ${device.deviceType.BLUETOOTH_WRITE_CHARACTERISTIC_UUID}`
+    );
     return new Promise((resolve, reject) => {
       this.manager.monitorCharacteristicForDevice(
-        macAddress,
-        btConsts.BLUETOOTH.UART_SERVICE_UUID,
-        btConsts.BLUETOOTH.WRITE_CHARACTERISTIC_UUID,
+        device.id,
+        device.deviceType.BLUETOOTH_UART_SERVICE_UUID,
+        device.deviceType.BLUETOOTH_WRITE_CHARACTERISTIC_UUID,
         (_, result) => {
           callback(result, resolve, reject);
         }
@@ -129,8 +122,7 @@ export class BleService {
   };
 
   writeAndMonitor = async (
-    macAddress: MacAddress,
-    device: Device | null,
+    device: BluetoothDevice,
     command: string,
     parser: MonitorCharacteristicParser<string[], SensorLog[] | InfoLog>
   ): Promise<boolean | InfoLog | SensorLog[]> => {
@@ -151,15 +143,14 @@ export class BleService {
       }
     };
 
-    const monitor = this.monitorCharacteristic(macAddress, device, monitoringCallback);
-    await this.writeCharacteristic(macAddress, device, command);
+    const monitor = this.monitorCharacteristic(device, monitoringCallback);
+    await this.writeCharacteristic(device, command);
 
     return monitor;
   };
 
   writeWithSingleResponse = async (
-    macAddress: MacAddress,
-    device: Device | null,
+    device: BluetoothDevice,
     command: string,
     parser: MonitorCharacteristicParser<string, boolean>
   ): Promise<boolean | InfoLog | SensorLog[]> => {
@@ -177,8 +168,8 @@ export class BleService {
       } else reject(new Error(`Command Failed`));
     };
     console.log(`BleService writeWithSingleResponse: ${command}`);
-    const monitor = this.monitorCharacteristic(macAddress, device, monitorCharacteristicCallback);
-    await this.writeCharacteristic(macAddress, device, command);
+    const monitor = this.monitorCharacteristic(device, monitorCharacteristicCallback);
+    await this.writeCharacteristic(device, command);
 
     return monitor;
   };
@@ -209,9 +200,8 @@ export class BleService {
     };
 
     const result = (await this.writeAndMonitor(
-      macAddress,
       device,
-      BLUE_MAESTRO.COMMANDS.DOWNLOAD,
+      device.deviceType.COMMANDS_DOWNLOAD,
       monitorCallback
     )) as SensorLog[];
 
@@ -221,9 +211,8 @@ export class BleService {
   updateLogInterval = async (macAddress: MacAddress, logInterval: number): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
     const result = await this.writeWithSingleResponse(
-      macAddress,
       device,
-      `${BLUE_MAESTRO.COMMANDS.UPDATE_LOG_INTERVAL}${logInterval}`,
+      `${device.deviceType.COMMANDS_UPDATE_LOG_INTERVAL}${logInterval}`,
       data => !!this.utils.stringFromBase64(data).match(/interval/i)
     );
     return !!result;
@@ -231,16 +220,14 @@ export class BleService {
 
   blink = async (macAddress: MacAddress): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
-    const btConsts = this.deviceConstants(device);
-    console.log(`BleService Blinking ${btConsts.COMMANDS.BLINK}`);
+    console.log(`BleService Blinking ${device.deviceType.COMMANDS_BLINK}`);
     const result = (await this.writeWithSingleResponse(
-      macAddress,
       device,
-      btConsts.COMMANDS.BLINK,
+      device.deviceType.COMMANDS_BLINK,
       data => {
-        const result = this.utils.stringFromBase64(data);
+        const answer = this.utils.stringFromBase64(data);
         console.log(`BleService data returned from blink write: ${result}`);
-        return !!result.match(/ok/i);
+        return !!answer.match(/ok/i);
       }
     )) as boolean;
 
@@ -280,9 +267,8 @@ export class BleService {
     };
 
     const result: InfoLog = (await this.writeAndMonitor(
-      macAddress,
       device,
-      BLUE_MAESTRO.COMMANDS.INFO,
+      device.deviceType.COMMANDS_INFO,
       monitorResultCallback
     )) as InfoLog;
 
@@ -292,9 +278,8 @@ export class BleService {
   toggleButton = async (macAddress: MacAddress): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
     const result = (await this.writeWithSingleResponse(
-      macAddress,
       device,
-      BLUE_MAESTRO.COMMANDS.DISABLE_BUTTON,
+      device.deviceType.COMMANDS_DISABLE_BUTTON,
       data => {
         return !!this.utils.stringFromBase64(data).match(/ok/i);
       }
