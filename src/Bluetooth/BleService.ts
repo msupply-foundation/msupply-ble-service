@@ -125,18 +125,29 @@ export class BleService {
   ): Promise<boolean | InfoLog | SensorLog[]> => {
     const data: string[] = [];
 
+    const transmissionDone = (val: string): boolean => {
+      const str = this.utils.stringFromBase64(val);
+      const pattern = /.*}$/;
+      const result = pattern.test(str);
+      console.log(`BleService Monitor receives ${str}, ${result}`);
+      return result;
+    };
+
     const monitoringCallback: MonitorCharacteristicCallback<SensorLog[] | InfoLog> = (
       result,
       resolve,
       reject
     ) => {
-      if (result?.value) data.push(result.value);
-      else {
-        try {
-          resolve(parser(data));
-        } catch (e) {
-          reject(new Error(`Parsing failed: ${e.message}`));
-        }
+      if (result?.value) {
+        data.push(result.value);
+        // return to wait for next chunk
+        if (device.deviceType === BLUE_MAESTRO) return;
+        if (!transmissionDone(result.value)) return;
+      }
+      try {
+        resolve(parser(data));
+      } catch (e) {
+        reject(new Error(`Parsing failed: ${e.message}`));
       }
     };
 
@@ -233,12 +244,13 @@ export class BleService {
 
   getInfo = async (macAddress: MacAddress): Promise<InfoLog> => {
     const device = await this.connectAndDiscoverServices(macAddress);
+    console.log(`BleService getInfo, ${device.id}`);
 
     const monitorResultCallback: MonitorCharacteristicParser<string[], InfoLog> = data => {
       const parsedBase64 = data.map(this.utils.stringFromBase64);
       const defaultInfoLog: InfoLog = { batteryLevel: null, isDisabled: true };
-
-      const parsedBatteryLevel = (info: string): number | null => {
+      console.log(`BleService monitor result callback ${parsedBase64[0]}`);
+      const blueMaestroBatteryLevel = (info: string): number | null => {
         const batteryLevelStringOrNull = info.match(/Batt lvl: [0-9]{1,3}/);
 
         if (!batteryLevelStringOrNull) return batteryLevelStringOrNull;
@@ -250,17 +262,33 @@ export class BleService {
           : this.utils.normaliseNumber(batteryLevel, [70, 100]);
       };
 
+      const bt510BatteryLevel = (info: string): number | null => {
+        if (JSON.parse(info).result !== 'ok') {
+          /* {"jsonrpc":"2.0","id":3,"error":{"code":-32602,"message":"Attribute Not Found"}} */
+          return null;
+        }
+
+        const batteryLevel = Number(JSON.parse(info).batteryVoltageMv);
+        console.log(`BleService Battery Level ${batteryLevel}`);
+
+        return Number.isNaN(batteryLevel)
+          ? null
+          : this.utils.normaliseNumber(Math.min(batteryLevel, 3000), [2100, 3000]);
+      };
+
       const parsedIsDisabled = (info: string): boolean => !!info.match(/Btn on\/off: 1/);
 
-      return parsedBase64.reduce((acc, info) => {
-        const isDisabled = parsedIsDisabled(info);
-        const batteryLevel = parsedBatteryLevel(info);
-
-        if (isDisabled) return { ...acc, isDisabled };
-        if (batteryLevel) return { ...acc, batteryLevel };
-
-        return acc;
-      }, defaultInfoLog);
+      if (device.deviceType === BLUE_MAESTRO) {
+        return parsedBase64.reduce((acc, info) => {
+          const isDisabled = parsedIsDisabled(info);
+          const batteryLevel = blueMaestroBatteryLevel(info);
+          if (isDisabled) return { ...acc, isDisabled };
+          if (batteryLevel) return { ...acc, batteryLevel };
+          return acc;
+        }, defaultInfoLog);
+      } else {
+        return { batteryLevel: bt510BatteryLevel(parsedBase64[0]), isDisabled: true };
+      }
     };
 
     const result: InfoLog = (await this.writeAndMonitor(
@@ -268,7 +296,7 @@ export class BleService {
       device.deviceType.COMMAND_INFO,
       monitorResultCallback
     )) as InfoLog;
-
+    console.log(`BleService getInfo ${JSON.stringify(result)}`);
     return result;
   };
 

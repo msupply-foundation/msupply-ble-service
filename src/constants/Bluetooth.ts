@@ -3,9 +3,9 @@ export enum BT510 {
   BLUETOOTH_WRITE_CHARACTERISTIC_UUID = '569a2000-b87f-490c-92cb-11ba5ea5167c',
   BLUETOOTH_READ_CHARACTERISTIC_UUID = '569a2001-b87f-490c-92cb-11ba5ea5167c',
   BLUETOOTH_SCAN_MODE_LOW_LATENCY = 2,
-  COMMAND_BLINK = '{"jsonrpc": "2.0", "method": "ledTest", "params": [200], "id": 2}',
+  COMMAND_BLINK = '{"jsonrpc": "2.0", "method": "ledTest", "params": [200], "id": 1}',
   COMMAND_DOWNLOAD = '*logall',
-  COMMAND_INFO = '*info',
+  COMMAND_INFO = '{"jsonrpc": "2.0", "method": "get", "params": ["batteryVoltageMv"], "id": 3}',
   COMMAND_UPDATE_LOG_INTERVAL = '*lint',
   COMMAND_DISABLE_BUTTON = '*bd',
   MANUFACTURER_ID = 228, // 0xE4
