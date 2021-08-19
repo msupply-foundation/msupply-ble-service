@@ -42,7 +42,8 @@ export interface MonitorCharacteristicCallback<ResolverResult> {
   (
     result: Characteristic | null,
     resolver: Resolver<ResolverResult>,
-    rejector: ErrorRejector
+    rejector: ErrorRejector,
+    subscription: Subscription
   ): void;
 }
 

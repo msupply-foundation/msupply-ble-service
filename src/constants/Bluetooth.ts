@@ -4,12 +4,13 @@ export enum BT510 {
   BLUETOOTH_READ_CHARACTERISTIC_UUID = '569a2001-b87f-490c-92cb-11ba5ea5167c',
   BLUETOOTH_SCAN_MODE_LOW_LATENCY = 2,
   COMMAND_BLINK = '{"jsonrpc": "2.0", "method": "ledTest", "params": [200], "id": 1}',
-  COMMAND_DOWNLOAD = '*logall',
-  COMMAND_INFO = '{"jsonrpc": "2.0", "method": "get", "params": ["batteryVoltageMv"], "id": 3}',
-  COMMAND_UPDATE_LOG_INTERVAL = '*lint',
+  COMMAND_PREPARE_LOG = '{ "jsonrpc": "2.0", "method": "prepareLog", "params": [MODE], "id": 2 }',
+  COMMAND_DOWNLOAD = '{ "jsonrpc": "2.0", "method": "readLog", "params": [NUMEVENTS], "id": 3 }',
+  COMMAND_INFO = '{"jsonrpc": "2.0", "method": "get", "params": ["batteryVoltageMv"], "id": 4}',
+  COMMAND_UPDATE_LOG_INTERVAL = '{"jsonrpc": "2.0", "method": "set", "params": {"temperatureSenseInterval": INTERVAL}, "id": 5}',
   COMMAND_DISABLE_BUTTON = '*bd',
   MANUFACTURER_ID = 228, // 0xE4
-  TEMPERATURE_DIVISOR = 10.0,
+  TEMPERATURE_DIVISOR = 100.0,
 }
 
 export enum BLUE_MAESTRO {
@@ -20,7 +21,7 @@ export enum BLUE_MAESTRO {
   COMMAND_BLINK = '*blink',
   COMMAND_DOWNLOAD = '*logall',
   COMMAND_INFO = '*info',
-  COMMAND_UPDATE_LOG_INTERVAL = '*lint',
+  COMMAND_UPDATE_LOG_INTERVAL = '*lintINTERVAL',
   COMMAND_DISABLE_BUTTON = '*bd',
   MANUFACTURER_ID = 307,
   DELIMITER_A = 11776,
