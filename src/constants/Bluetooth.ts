@@ -8,6 +8,7 @@ export enum BT510 {
   COMMAND_DOWNLOAD = '{ "jsonrpc": "2.0", "method": "readLog", "params": [NUMEVENTS], "id": 3 }',
   COMMAND_INFO = '{"jsonrpc": "2.0", "method": "get", "params": ["batteryVoltageMv"], "id": 4}',
   COMMAND_UPDATE_LOG_INTERVAL = '{"jsonrpc": "2.0", "method": "set", "params": {"temperatureSenseInterval": INTERVAL}, "id": 5}',
+  COMMAND_ACK_LOG = '{ "jsonrpc": "2.0", "method": "ackLog", "params": [NUMEVENTS], "id": 6 }',
   COMMAND_DISABLE_BUTTON = '*bd',
   MANUFACTURER_ID = 228, // 0xE4
   TEMPERATURE_DIVISOR = 100.0,

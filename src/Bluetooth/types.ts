@@ -23,7 +23,13 @@ export interface InfoLog {
 }
 
 export interface SensorLog {
+  time: string;
   temperature: number;
+}
+
+export interface DataLog {
+  numEvents: number;
+  data: string;
 }
 
 export interface ScanCallback {
