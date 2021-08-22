@@ -306,7 +306,8 @@ export class BleService {
           console.log(`BleService Ack failed ${e.message}`);
         }
       }
-      //console.log(`BleService sensorLog after loop ${JSON.stringify(sensorLog)}`);
+      // The table only shows up on flipper, and then
+      // only the first 100 items are printed.
       console.table(
         [
           { time: '', temperature: 'BleService' as unknown as number },
@@ -428,9 +429,13 @@ export class BleService {
 
   toggleButton = async (macAddress: MacAddress): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
+    if (device.deviceType === BT510) {
+      // Laird doesn't have this command
+      return true;
+    }
     const result = (await this.writeWithSingleResponse(
       device,
-      device.deviceType.COMMAND_DISABLE_BUTTON,
+      BLUE_MAESTRO.COMMAND_DISABLE_BUTTON,
       data => {
         return !!this.utils.stringFromBase64(data).match(/ok/i);
       }
