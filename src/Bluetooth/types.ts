@@ -23,7 +23,6 @@ export interface InfoLog {
 }
 
 export interface SensorLog {
-  time: string;
   temperature: number;
 }
 
