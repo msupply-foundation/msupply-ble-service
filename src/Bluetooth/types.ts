@@ -33,7 +33,7 @@ export interface DataLog {
 }
 
 export interface ScanCallback {
-  (error: BleError | null, device: Device | null): void;
+  (error: BleError | null, deviceDescriptor: string): void;
 }
 
 export interface Resolver<ResolverResult> {

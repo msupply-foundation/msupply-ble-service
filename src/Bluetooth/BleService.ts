@@ -53,9 +53,9 @@ export class BleService {
     this.manager.stopDeviceScan();
   };
 
-  scanForSensors = (callback: any): void => {
+  scanForSensors = (callback: ScanCallback): void => {
     const scanOptions: ScanOptions = { scanMode: ScanMode.LowLatency };
-    const filteredCallback: ScanCallback = (err: BleError | null, device: Device | null): void => {
+    const filteredCallback = (err: BleError | null, device: Device | null): void => {
       if (err) {
         console.log('BleService Scan Error:', JSON.stringify(err));
       }
