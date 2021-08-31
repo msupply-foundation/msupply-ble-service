@@ -18,7 +18,6 @@ import {
   LogLevel,
   Device,
   BleError,
-  DeviceType,
 } from './types';
 import { BluetoothManager } from './BleManager';
 
@@ -26,42 +25,27 @@ export class BleService {
   manager: BluetoothManager;
   utils: BTUtilService;
 
-  constructor(manager: BluetoothManager, utils: BTUtilService) {
+  constructor(manager: BluetoothManager) {
     this.manager = manager;
     manager.setLogLevel(LogLevel.Verbose);
-    // In the future we may want to use our own utils,
-    //  not the ones passed in from the app.
-    //this.utils = new BTUtilService();
-    this.utils = utils;
+    // Caller passes in utils from the main app,
+    // but we ignore it and use our own.
+    // This needs to be fixed in the main app.
+    this.utils = new BTUtilService();
   }
 
-  deviceConstants = (device: Pick<Device, 'id' | 'name'> | null): DeviceType => {
-    if (device?.name) {
-      if (device.name === 'BT510') {
-        // Laird doesn't include Manufacurer Data in connect response.
-        return BT510;
-      } else {
-        // Blue Maestro has part of the mac address as its name.
-        // We could check this but...
-        return BLUE_MAESTRO;
-      }
-    }
-    throw new Error('device or name is null');
+  connectToDevice = async (deviceId: string): Promise<void> => {
+    await this.manager.connectToDevice(deviceId);
   };
 
-  connectToDevice = async (macAddress: MacAddress): Promise<TypedDevice> => {
-    const device = await this.manager.connectToDevice(macAddress);
-    console.log(`BleService connectToDevice, device, id ${device?.id}, name ${device?.name}`);
-    return { id: device.id, deviceType: this.deviceConstants(device) };
-  };
-
-  connectAndDiscoverServices = async (macAddress: MacAddress): Promise<TypedDevice> => {
-    if (await this.manager.isDeviceConnected(macAddress)) {
-      await this.manager.cancelDeviceConnection(macAddress);
+  connectAndDiscoverServices = async (deviceDescriptor: string): Promise<TypedDevice> => {
+    const device = this.utils.deviceDescriptorToDevice(deviceDescriptor);
+    if (await this.manager.isDeviceConnected(device.id)) {
+      await this.manager.cancelDeviceConnection(device.id);
     }
-    const device = await this.connectToDevice(macAddress);
+    await this.connectToDevice(device.id);
 
-    await this.manager.discoverAllServicesAndCharacteristicsForDevice(macAddress);
+    await this.manager.discoverAllServicesAndCharacteristicsForDevice(device.id);
     return device;
   };
 
@@ -69,7 +53,7 @@ export class BleService {
     this.manager.stopDeviceScan();
   };
 
-  scanForSensors = (callback: ScanCallback): void => {
+  scanForSensors = (callback: any): void => {
     const scanOptions: ScanOptions = { scanMode: ScanMode.LowLatency };
     const filteredCallback: ScanCallback = (err: BleError | null, device: Device | null): void => {
       if (err) {
@@ -79,10 +63,10 @@ export class BleService {
       if (device?.manufacturerData) {
         const mfgId = Buffer.from(device.manufacturerData, 'base64').readInt16LE(0);
         if (mfgId === BLUE_MAESTRO.MANUFACTURER_ID || mfgId === BT510.MANUFACTURER_ID) {
-          // console.log(
-          //   `BleService Found device: ${device.id}, ${device.name}, ${mfgId}`
-          // );
-          callback(err, device);
+          const descriptor = this.utils.deviceToDeviceDescriptor(device.id, mfgId);
+          //console.log(`BleService Found device: ${descriptor}, ${device.name}, ${mfgId}`);
+
+          callback(err, descriptor);
         }
       }
     };
@@ -232,7 +216,8 @@ export class BleService {
         //        console.log(`BleService data is ${result.result[1].slice(0, 10)}`);
         return { numEvents, data: result.result[1] };
       }
-    };
+    }; // end monitor callback
+
     if (device.deviceType === BT510) {
       // const FIFO = '0';
       // const LIFO = '1';
@@ -347,7 +332,7 @@ export class BleService {
     });
     // Clear logs
     if (device.deviceType === BT510) {
-      this.downloadLogs(device.id);
+      this.downloadLogs(macAddress);
     }
     //console.log(`BleService logInterval result: ${result}`);
     return !!result;
