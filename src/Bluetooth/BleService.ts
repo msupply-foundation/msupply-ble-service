@@ -272,7 +272,11 @@ export class BleService {
     }
   };
 
-  updateLogInterval = async (macAddress: MacAddress, logInterval: number): Promise<boolean> => {
+  updateLogInterval = async (
+    macAddress: MacAddress,
+    logInterval: number,
+    clearLogs = true
+  ): Promise<boolean> => {
     const device = await this.connectAndDiscoverServices(macAddress);
     const command = device.deviceType.COMMAND_UPDATE_LOG_INTERVAL.replace(
       'INTERVAL',
@@ -285,8 +289,10 @@ export class BleService {
         !!info.match(/interval/i)
       );
     });
-    // Clear logs
-    if (device.deviceType === BT510) {
+    // Clear logs if we haven't just downloaded
+    // BlueMaestro automatically clears logs when log interval is set,
+    // But we have to download all the logs to clear them on BT510
+    if (clearLogs && device.deviceType === BT510) {
       this.downloadLogs(macAddress);
     }
     return !!result;
@@ -430,12 +436,13 @@ export class BleService {
     macAddress: MacAddress,
     logInterval: number,
     retriesLeft: number,
+    clearLogs: boolean,
     error: Error | null
   ): Promise<boolean> => {
     if (!retriesLeft) throw error;
 
-    return this.updateLogInterval(macAddress, logInterval).catch(err =>
-      this.updateLogIntervalWithRetries(macAddress, logInterval, retriesLeft - 1, err)
+    return this.updateLogInterval(macAddress, logInterval, clearLogs).catch(err =>
+      this.updateLogIntervalWithRetries(macAddress, logInterval, retriesLeft - 1, clearLogs, err)
     );
   };
 }
