@@ -348,7 +348,7 @@ export class BleService {
 
         return Number.isNaN(batteryLevel)
           ? null
-          : this.utils.normaliseNumber(batteryLevel, [70, 100]);
+          : this.utils.normaliseNumber(batteryLevel, [75, 100]);
       };
 
       const bt510BatteryLevel = (info: string): number | null => {
@@ -366,7 +366,7 @@ export class BleService {
         }
         return Number.isNaN(batteryLevel)
           ? null
-          : this.utils.normaliseNumber(Math.min(batteryLevel, 3000), [2100, 3000]);
+          : this.utils.normaliseNumber(Math.min(batteryLevel, 3000), [2250, 3000]);
       };
 
       const parsedIsDisabled = (info: string): boolean => !!info.match(/Btn on\/off: 1/);
