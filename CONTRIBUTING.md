@@ -36,6 +36,7 @@ environment for this module. The procedure for this informal publish is:
 ```sh
 # In msupply-ble-service
 npx yalc publish --private --scripts
+# (If you're doing a release, `npm version` will run that for you)
 # In msupply-cold-chain
 yarn remove msupply-ble-service
 npx yalc add msupply-ble-service
