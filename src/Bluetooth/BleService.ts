@@ -112,7 +112,7 @@ export class BleService {
 
     const transmissionDone = (val: string): boolean => {
       const str = this.utils.stringFromBase64(val);
-      const pattern = /.*}$/;
+      const pattern = new RegExp('.*}$'); // workaround for emacs web mode confused by bracket in a regexp literal
       const result = pattern.test(str);
       return result;
     };
