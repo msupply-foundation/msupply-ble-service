@@ -20,17 +20,55 @@ import {
 } from './types';
 import { BluetoothManager, MockOrRealDevice } from './BleManager';
 
+// types copied from mobile/src/utilities/logging/
+type Action = (message: string | Error, details?: Record<string, unknown>) => void;
+interface Logger {
+  trace: Action;
+  debug: Action;
+  info: Action;
+  warn: Action;
+  error: Action;
+  fatal: Action;
+  setLogLevel: (transportKey: string, newLevel: number) => void;
+}
+const dummyLogger: Logger = {
+  trace: (_message, _details) => {
+    /*do nothing*/
+  },
+  debug: (_message, _details) => {
+    /*do nothing*/
+  },
+  info: (_message, _details) => {
+    /*do nothing*/
+  },
+  warn: (_message, _details) => {
+    /*do nothing*/
+  },
+  error: (_message, _details) => {
+    /*do nothing*/
+  },
+  fatal: (_message, _details) => {
+    /*do nothing*/
+  },
+  setLogLevel: (_transportKey, _newLevel) => {
+    /*do nothing*/
+  },
+};
+
 export class BleService {
   manager: BluetoothManager;
   utils: BTUtilService;
-
-  constructor(manager: BluetoothManager) {
+  logger: Logger;
+  constructor(manager: BluetoothManager, logger = dummyLogger) {
     this.manager = manager;
+    this.logger = logger;
+    console.log(`logger is ${JSON.stringify(logger)}`);
     manager.setLogLevel(LogLevel.Verbose);
     // Caller passes in utils from the main app,
     // but we ignore it and use our own.
     // This needs to be fixed in the main app.
     this.utils = new BTUtilService();
+    logger.info('BleService constructor called');
   }
 
   connectToDevice = (deviceId: string): Promise<MockOrRealDevice> => {
@@ -99,7 +137,7 @@ export class BleService {
   };
 
   // https://gist.github.com/gordonbrander/2230317
-  transactionId = () => '_' + Math.random().toString(36).substr(2, 9);
+  transactionId = (): string => '_' + Math.random().toString(36).substr(2, 9);
 
   writeAndMonitor = async (
     device: TypedDevice,
@@ -189,6 +227,25 @@ export class BleService {
         this.manager.cancelTransaction(transactionId);
         throw new Error(` writeWithSingleResponse rejected, ${device.id} ${e.message}`);
       });
+  };
+
+  /** Facade for clearing logs.
+   *
+   * Connects with a sensor and clears all temperature logs.
+   *
+   * Returns a promise which resolves to boolean, which is ignored by the caller.
+   *
+   * @param {String} macAddress
+   */
+  clearLogs = async (macAddress: MacAddress): Promise<void> => {
+    const device = await this.connectAndDiscoverServices(macAddress);
+    if (device?.deviceType === BT510) {
+      await this.downloadLogs(macAddress);
+    } else {
+      await this.writeWithSingleResponse(device, BLUE_MAESTRO.COMMAND_CLEAR, data => {
+        return !!this.utils.stringFromBase64(data);
+      });
+    }
   };
 
   downloadLogs = async (macAddress: MacAddress): Promise<SensorLog[]> => {

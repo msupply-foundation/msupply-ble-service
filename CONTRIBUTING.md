@@ -12,12 +12,12 @@ yarn
 
 > While it's possible to use [`npm`](https://github.com/npm/cli), the tooling is built around [`yarn`](https://classic.yarnpkg.com/), so you'll have an easier time if you use `yarn` for development.
 
-As we do not have an example app yet, for development, link this library into `msupply-cold-chain` using the following procedure:
+As we do not have an example app yet, for development, link this library into `msupply-cold-chain` (or `mobile`) using the following procedure:
 
 ```sh
-# In your msupply-cold-chain directory:
+# In your msupply-cold-chain or mobile directory:
 yarn remove msupply-ble-service
-npx react-native-clean-project
+npx react-native-clean-project # or however else you clean
 yarn add link:../msupply-ble-service # or wherever this module is
 npx react-native start --config metro.devconfig.js
 npx react-native run-android
@@ -29,15 +29,15 @@ When you make a change in this module, you can just hit 'r' in the terminal to r
 
 Until such time as we publish this module to npm, we use
 [yalc](https://github.com/wclr/yalc#keep-it-in-git) to embed a snapshot of the
-currently working code in `msupply-cold-chain`. This allows devs to
-work on the rest of `msupply-cold-chain` without having to set up the development
+currently working code in `msupply-cold-chain` (or `mobile`). This allows devs to
+work on the rest of `msupply-cold-chain` (or `mobile`) without having to set up the development
 environment for this module. The procedure for this informal publish is:
 
 ```sh
 # In msupply-ble-service
 npx yalc publish --private --scripts
 # (If you're doing a release, `npm version` will run that for you)
-# In msupply-cold-chain
+# In msupply-cold-chain or mobile
 yarn remove msupply-ble-service
 npx yalc add msupply-ble-service
 yarn
