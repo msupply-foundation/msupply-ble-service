@@ -72,17 +72,24 @@ export class BleService {
   }
 
   connectToDevice = (deviceId: string): Promise<MockOrRealDevice> => {
+    this.logger.info('connectToDevice', { deviceId });
     return this.manager.connectToDevice(deviceId);
   };
 
   connectAndDiscoverServices = async (deviceDescriptor: string): Promise<TypedDevice> => {
+    this.logger.info('connectAndDiscoverServices', { deviceDescriptor });
     const device = this.utils.deviceDescriptorToDevice(deviceDescriptor);
-    if (await this.manager.isDeviceConnected(device.id)) {
+    const deviceIsConnected = await this.manager.isDeviceConnected(device.id);
+    this.logger.info('deviceIsConnected?', { deviceIsConnected });
+    if (deviceIsConnected) {
       await this.manager.cancelDeviceConnection(device.id);
     }
     await this.connectToDevice(device.id);
 
     await this.manager.discoverAllServicesAndCharacteristicsForDevice(device.id);
+    this.logger.info('Discovered all services and characteristics for device', {
+      device,
+    });
     return device;
   };
 
@@ -91,6 +98,7 @@ export class BleService {
   };
 
   scanForSensors = (callback: ScanCallback): void => {
+    this.logger.info('scanning for sensors', {});
     const scanOptions: ScanOptions = { scanMode: ScanMode.LowLatency };
     const filteredCallback = (err: BleError | null, device: Device | null): void => {
       if (err) {
@@ -250,10 +258,11 @@ export class BleService {
 
   downloadLogs = async (macAddress: MacAddress): Promise<SensorLog[]> => {
     const device = await this.connectAndDiscoverServices(macAddress);
-
+    this.logger.info('Download logs connected and discovered services', { macAddress });
     const monitorCallback: MonitorCharacteristicParser<string[], SensorLog[] | DataLog> = (
       data: string[]
     ) => {
+      this.logger.info('Write and monitor found some data!', { data });
       if (device.deviceType === BLUE_MAESTRO) {
         const buffer = Buffer.concat(
           data.slice(1).map(datum => this.utils.bufferFromBase64(datum))
@@ -495,6 +504,7 @@ export class BleService {
     retriesLeft: number,
     error: Error | null
   ): Promise<SensorLog[]> => {
+    this.logger.info('Starting to download logs', { macAddress, retriesLeft, error });
     if (!retriesLeft) throw error;
 
     return this.downloadLogs(macAddress).catch(err =>
