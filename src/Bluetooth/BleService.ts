@@ -1,7 +1,7 @@
 import { BTUtilService } from '../BTUtilService';
 
 import { Buffer } from 'buffer';
-import { BLUE_MAESTRO, BT510 } from '../index';
+import { BLUE_MAESTRO, BT510 } from '../constants';
 import { MacAddress } from '../types/common';
 import {
   Characteristic,
@@ -68,7 +68,7 @@ export class BleService {
     // but we ignore it and use our own.
     // This needs to be fixed in the main app.
     this.utils = new BTUtilService();
-    logger.info('BleService constructor called');
+    logger.info('BleService constructor called', {});
   }
 
   connectToDevice = (deviceId: string): Promise<MockOrRealDevice> => {
@@ -88,7 +88,8 @@ export class BleService {
 
     await this.manager.discoverAllServicesAndCharacteristicsForDevice(device.id);
     this.logger.info('Discovered all services and characteristics for device', {
-      device,
+      id: device.id,
+      manufacturer: device.deviceType.MANUFACTURER_ID,
     });
     return device;
   };
