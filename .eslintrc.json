@@ -1,0 +1,26 @@
+{
+    "root": true,
+    "extends": [
+      "@react-native-community",
+      "plugin:@typescript-eslint/recommended",
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": [
+        "error",
+        {
+          "bracketSpacing": true,
+          "printWidth": 100,
+          "singleQuote": true,
+          "tabWidth": 2,
+          "trailingComma": "es5",
+          "arrowParens": "avoid"
+        }
+      ],
+      "no-shadow": "off",
+      "@typescript-eslint/no-shadow": [
+        "error"
+      ],
+      "@typescript-eslint/no-var-requires": "off"
+    }
+  }

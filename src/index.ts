@@ -1,2 +1,4 @@
 export { BleService, DevBleManager, BleManager } from './Bluetooth';
-export { BLUETOOTH, BLUE_MAESTRO } from './constants';
+export { BtUtilService } from './BTUtilService';
+export { BT510, BLUE_MAESTRO } from './constants';
+export * from './Bluetooth/types';

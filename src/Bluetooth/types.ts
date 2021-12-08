@@ -8,8 +8,13 @@ import {
   LogLevel,
 } from 'react-native-ble-plx';
 
-export interface BluetoothDevice {
+import { BT510, BLUE_MAESTRO } from '../constants';
+
+export type DeviceType = typeof BT510 | typeof BLUE_MAESTRO; // BT510 | BLUE_MAESTRO
+
+export interface TypedDevice {
   id: string;
+  deviceType: DeviceType; // BT510 | BLUE_MAESTRO
 }
 
 export interface InfoLog {
@@ -21,8 +26,13 @@ export interface SensorLog {
   temperature: number;
 }
 
+export interface DataLog {
+  numEvents: number;
+  data: string;
+}
+
 export interface ScanCallback {
-  (error: BleError | null, device: Device | null): void;
+  (error: BleError | null, deviceDescriptor: string): void;
 }
 
 export interface Resolver<ResolverResult> {
@@ -37,7 +47,8 @@ export interface MonitorCharacteristicCallback<ResolverResult> {
   (
     result: Characteristic | null,
     resolver: Resolver<ResolverResult>,
-    rejector: ErrorRejector
+    rejector: ErrorRejector,
+    subscription: Subscription
   ): void;
 }
 
