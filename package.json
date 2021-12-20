@@ -1,5 +1,5 @@
 {
-  "name": "msupply-ble-service",
+  "name": "@openmsupply/msupply-ble-service",
   "version": "0.5.0",
   "description": "Low level bluetooth library",
   "author": "Chester Wood <chetstone@malamode.io> (https://github.com/chetstone)",
