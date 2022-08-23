@@ -62,7 +62,6 @@ export class BleService {
   constructor(manager: BluetoothManager, logger = dummyLogger) {
     this.manager = manager;
     this.logger = logger;
-    console.log(`logger is ${JSON.stringify(logger)}`);
     manager.setLogLevel(LogLevel.Verbose);
     // Caller passes in utils from the main app,
     // but we ignore it and use our own.
@@ -85,20 +84,26 @@ export class BleService {
     // in which case an error is thrown when trying to connect: [BleError: Device ? is already connected]
     // to work around this, we disconnect the device, ignoring any errors, before connecting again
     if (device.deviceType === BLUE_MAESTRO) {
+      this.logger.debug(`Connecting to BM device::${deviceDescriptor}`);
       try {
         await this.manager.cancelDeviceConnection(device.id);
-      } catch {
+      } catch (e) {
+        this.logger.warn(`Error disconnecting from ${deviceDescriptor}: ${e.message}`);
         // ignore error
       }
     } else {
+      this.logger.debug(`Connecting to other device::${deviceDescriptor}`);
       const deviceIsConnected = await this.manager.isDeviceConnected(device.id);
       if (deviceIsConnected) {
+        this.logger.debug(`Disconnecting from ${deviceDescriptor}`);
         await this.manager.cancelDeviceConnection(device.id);
       }
     }
     await this.connectToDevice(device.id);
+    this.logger.debug(`Connected to ${deviceDescriptor}`);
 
     await this.manager.discoverAllServicesAndCharacteristicsForDevice(device.id);
+    this.logger.debug(`Discovered all services for ${deviceDescriptor}`);
     this.logger.info('Discovered all services and characteristics for device', {
       id: device.id,
       manufacturer: device.deviceType.MANUFACTURER_ID,
@@ -307,7 +312,7 @@ export class BleService {
     if (device.deviceType === BT510) {
       // const FIFO = '0';
       // const LIFO = '1';
-
+      this.logger.debug(`Preparing to download logs for ${macAddress}`);
       const prepareLogs = async (): Promise<boolean> => {
         const prepCommand = BT510.COMMAND_PREPARE_LOG.replace('MODE', '0');
 
@@ -328,6 +333,7 @@ export class BleService {
       try {
         while (await prepareLogs()) {
           const downloadCommand = BT510.COMMAND_DOWNLOAD.replace('NUMEVENTS', '500');
+          this.logger.debug(`Sending download command to ${macAddress}`);
           const dataLog = (await this.writeAndMonitor(
             device,
             downloadCommand,
@@ -355,10 +361,12 @@ export class BleService {
           }, []);
 
           if (await ackLogs(dataLog.numEvents)) {
+            this.logger.debug(`Ack received for ${macAddress}`);
             sensorLog = sensorLog.concat(log);
           }
         }
       } catch (e) {
+        this.logger.error(`Error downloading logs: ${e.message}`);
         if (sensorLog.length === 0) {
           throw new Error(`downloadLogs ${e.message}`);
         }
@@ -366,9 +374,18 @@ export class BleService {
       }
       return sensorLog;
     } else {
-      const command = BLUE_MAESTRO.COMMAND_DOWNLOAD.replace('NUMEVENTS', '500');
-      const result = (await this.writeAndMonitor(device, command, monitorCallback)) as SensorLog[];
-      return result;
+      try {
+        const command = BLUE_MAESTRO.COMMAND_DOWNLOAD.replace('NUMEVENTS', '500');
+        const result = (await this.writeAndMonitor(
+          device,
+          command,
+          monitorCallback
+        )) as SensorLog[];
+        return result;
+      } catch (e) {
+        this.logger.error(`Error downloading logs: ${e.message}`);
+      }
+      return [] as SensorLog[];
     }
   };
 
@@ -433,7 +450,7 @@ export class BleService {
       };
 
       const bt510BatteryLevel = (info: string): number | null => {
-        let batteryLevel = null;
+        let batteryLevel: number | null = null;
         if (info) {
           const parsedInfo = JSON.parse(info);
 
