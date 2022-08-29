@@ -201,6 +201,8 @@ export class BleService {
           // to the caller)
           return;
         }
+        this.logger.debug(`Monitor callback for ${device.id}. Data length: ${data.length}`);
+
         if (data.length === 0) throw new Error(' callback no data returned');
         resolve(parser(data));
       } catch (e) {
@@ -210,11 +212,13 @@ export class BleService {
 
     const transactionId = this.transactionId();
     const monitor = this.monitorCharacteristic(device, monitoringCallback, transactionId);
+
     // We only care about the result if both the write and monitor succeed.
     return Promise.all([monitor, this.writeCharacteristic(device, command)])
       .then(r => r[0])
       .catch(e => {
         this.manager.cancelTransaction(transactionId);
+        this.logger.error(` writeAndMonitor rejected ${device.id} Error: ${e.message}`);
         throw new Error(` writeAndMonitor rejected, ${device.id} ${e.message}`);
       });
   };
@@ -278,7 +282,7 @@ export class BleService {
 
   downloadLogs = async (macAddress: MacAddress): Promise<SensorLog[]> => {
     const device = await this.connectAndDiscoverServices(macAddress);
-    this.logger.info('Download logs connected and discovered services', { macAddress });
+    this.logger.info(`Download logs connected and discovered services for ${macAddress}`);
     const monitorCallback: MonitorCharacteristicParser<string[], SensorLog[] | DataLog> = (
       data: string[]
     ) => {
@@ -376,6 +380,7 @@ export class BleService {
     } else {
       try {
         const command = BLUE_MAESTRO.COMMAND_DOWNLOAD.replace('NUMEVENTS', '500');
+        this.logger.debug(`Sending download command to ${macAddress}`);
         const result = (await this.writeAndMonitor(
           device,
           command,
@@ -536,7 +541,9 @@ export class BleService {
     retriesLeft: number,
     error: Error | null
   ): Promise<SensorLog[]> => {
-    this.logger.info('Starting to download logs', { macAddress, retriesLeft, error });
+    this.logger.info(
+      `Starting to download logs for ${macAddress}. There are ${retriesLeft} retries left. Error: ${error?.message} }`
+    );
     if (!retriesLeft) throw error;
 
     return this.downloadLogs(macAddress).catch(err =>
