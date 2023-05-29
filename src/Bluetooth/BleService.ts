@@ -160,8 +160,8 @@ export class BleService {
         device.id,
         device.deviceType.BLUETOOTH_UART_SERVICE_UUID,
         device.deviceType.BLUETOOTH_WRITE_CHARACTERISTIC_UUID,
-        (_, result) => {
-          callback(result, resolve, reject, subscription);
+        (error, result) => {
+          callback(result, resolve, reject, subscription, error);
         },
         transactionId
       );
@@ -191,8 +191,17 @@ export class BleService {
       result,
       resolve,
       reject,
-      subscription
+      subscription,
+      error
     ) => {
+      this.logger.debug(`${device.id} Monitor command: ${command}`);
+      this.logger.debug(`${device.id} Monitor callback result valid: ${Boolean(result?.value)}`);
+      if (error) {
+        this.logger.debug(`${device.id} Monitor callback error name: ${error.name}`);
+        this.logger.debug(`${device.id} Monitor callback error message: ${error.message}`);
+        this.logger.debug(`${device.id} Monitor callback error reason: ${error.reason}`);
+      }
+
       if (result?.value) {
         data.push(result.value);
         // return to wait for next chunk
